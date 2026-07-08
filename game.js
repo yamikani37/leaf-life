@@ -137,7 +137,7 @@ document.getElementById('sound-btn').addEventListener('click', () => { initAudio
 
 // 🚨 IMPORTANT: Replace this with your actual Worker URL
 
-const WORKER_URL = 'https://leaf-life-proxy.workers.dev';
+const WORKER_URL = 'https://leaf-life-proxy.yami-kan37.workers.dev';
 
 // Fetch a question from your Cloudflare Worker
 async function fetchAIQuestion(stage) {
