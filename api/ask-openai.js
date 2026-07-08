@@ -1,24 +1,25 @@
 export default async function handler(req, res) {
+  // Only accept POST
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
     const { stage } = req.body;
-    const groqKey = process.env.GROQ_API_KEY;
+    const openaiKey = process.env.OPENAI_API_KEY;
 
-    if (!groqKey) {
-      return res.status(500).json({ error: 'GROQ_API_KEY not set' });
+    if (!openaiKey) {
+      return res.status(500).json({ error: 'OPENAI_API_KEY not set' });
     }
 
-    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${groqKey}`,
+        'Authorization': `Bearer ${openaiKey}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: 'gpt-3.5-turbo',
         messages: [
           { role: 'system', content: 'You are a biology tutor. Return only valid JSON.' },
           { role: 'user', content: `Generate a multiple‑choice question about photosynthesis for a plant that just reached the "${stage}" stage. Provide 4 options, one correct. Return JSON: {"question":"...","options":["...","...","...","..."],"correctIndex":0}` }
