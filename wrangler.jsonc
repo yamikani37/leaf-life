@@ -1,0 +1,9 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "leaf-life-proxy",                    // ← unique name
+  "compatibility_date": "2026-07-08",
+  "main": "worker.js",                          // ← Worker code file
+  "observability": { "enabled": true },
+  "assets": { "directory": "." },               // optional: serves static files too
+  "compatibility_flags": ["nodejs_compat"]
+}
