@@ -137,7 +137,7 @@ document.getElementById('sound-btn').addEventListener('click', () => { initAudio
 // ====================================================================
 //  AI QUIZ via Cloudflare Worker Proxy
 // ====================================================================
-const WORKER_URL = 'https://leaf-life-ai.yami-kan37.workers.dev/ask';
+const WORKER_URL = 'https://leaf-life-bice.vercel.app/api/ask';
 
 // Fetch a question from your Cloudflare Worker
 async function fetchAIQuestion(stage) {
