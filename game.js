@@ -1,6 +1,8 @@
 /** LEAF LIFE — Photosynthesis Survival Game **/
 
 // ---- constants ----
+const GLUCOSE_QUIZ_INTERVAL = 100; // trigger quiz every 100 glucose
+
 const W = 860,
   H = 400;
 
@@ -132,44 +134,38 @@ window.addEventListener('touchstart', initAudio, { once: true });
 document.getElementById('sound-btn').addEventListener('click', () => { initAudio();
   toggleSound(); });
 
-
+// ====================================================================
 //  AI QUIZ via Cloudflare Worker Proxy
-
-// 🚨 IMPORTANT: Replace this with your actual Worker URL
-
+// ====================================================================
 const WORKER_URL = 'https://leaf-life-proxy.yami-kan37.workers.dev';
 
 // Fetch a question from your Cloudflare Worker
 async function fetchAIQuestion(stage) {
+  console.log('🔄 Fetching AI question for stage:', stage);
   try {
     const response = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stage })
     });
-
-    if (!response.ok) return null;
+    if (!response.ok) {
+      console.warn('❌ Worker error:', response.status);
+      return null;
+    }
     const data = await response.json();
-
-    // The worker forwards the OpenAI response as-is, so we parse the same way
+    console.log('✅ AI response:', data);
     if (!data.choices || !data.choices[0]) return null;
     const content = data.choices[0].message.content;
-
-    // Extract JSON from the response (in case it includes markdown)
     const jsonMatch = content.match(/\{.*\}/s);
     if (!jsonMatch) return null;
     const parsed = JSON.parse(jsonMatch[0]);
-
-    // Validate the structure
     if (!parsed.question || !parsed.options || !Array.isArray(parsed.options) || parsed.options.length < 2) return null;
     if (typeof parsed.correctIndex !== 'number') parsed.correctIndex = 0;
-
-    // Add a friendly explain (AI doesn't provide one)
     parsed.explain = 'Correct! (AI-generated question)';
     parsed.unlock = 'You learned something new!';
     return parsed;
   } catch (e) {
-    console.warn('AI question failed, falling back to static:', e);
+    console.warn('❌ AI fetch error:', e);
     return null;
   }
 }
@@ -251,7 +247,8 @@ function freshState() {
     cuticleUnlocked: false,
     sunAlerted: false,
     waterAlerted: false,
-    co2Alerted: false
+    co2Alerted: false,
+    lastQuizGlucose: 0   // track last glucose at which a quiz was triggered
   };
 }
 const state = freshState();
@@ -736,10 +733,8 @@ class MainScene extends Phaser.Scene {
       const unlockMsg = STATIC_QUIZZES[stage] ? ' — ' + STATIC_QUIZZES[stage].unlock : '';
       this.flashBanner('🌱 Growth stage: ' + stage.charAt(0).toUpperCase() + stage.slice(1) + unlockMsg);
 
-      // Trigger quiz (AI or static)
-      if (STATIC_QUIZZES[stage] || getOpenAIKey()) {
-        this.time.delayedCall(650, () => triggerLearningBurst(stage));
-      }
+      // Optionally trigger a quiz on stage change (if you want both)
+      // this.time.delayedCall(300, () => { if (!state.over) triggerLearningBurst(state.stage); });
     }
   }
 
@@ -814,6 +809,16 @@ class MainScene extends Phaser.Scene {
 
     this.updatePlantStage();
 
+    // ---------- GLUCOSE QUIZ CHECK ----------
+    const glucoseSinceLastQuiz = state.glucose - state.lastQuizGlucose;
+    if (glucoseSinceLastQuiz >= GLUCOSE_QUIZ_INTERVAL && state.glucose > 0 && !state.over) {
+      state.lastQuizGlucose = state.glucose;
+      this.time.delayedCall(300, () => {
+        if (!state.over) triggerLearningBurst(state.stage);
+      });
+    }
+    // ----------------------------------------
+
     // movement (keyboard)
     const speed = 260;
     if (this.cursors.left.isDown || this.keyA.isDown) this.plantX -= speed * dt;
@@ -883,7 +888,7 @@ document.getElementById('save-score-btn').addEventListener('click', async () => 
 //  INIT
 // ====================================================================
 loadLeaderboard().then(renderLeaderboard);
-updateAIStatus();
+// updateAIStatus() removed – no longer needed
 
 window.addEventListener('resize', () => {
   if (game && game.scale) game.scale.refresh();
