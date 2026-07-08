@@ -163,6 +163,7 @@ async function fetchAIQuestion(stage) {
     if (typeof parsed.correctIndex !== 'number') parsed.correctIndex = 0;
     parsed.explain = 'Correct! (AI-generated question)';
     parsed.unlock = 'You learned something new!';
+    parsed.q = parsed.question;
     return parsed;
   } catch (e) {
     console.warn('❌ AI fetch error:', e);
